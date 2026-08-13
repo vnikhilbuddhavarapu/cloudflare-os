@@ -1,0 +1,19 @@
+.github/workflows/ci.yml
+  s_a10f45aa10a9ca::t_e26bca3713455f 1-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4d0eb35d4efd65b1879f962220924e1ccf233625",
+  "prompts": {},
+  "sessions": {
+    "s_a10f45aa10a9ca": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "exciting-polonium",
+        "model": "unknown"
+      },
+      "human_author": "Nikhil <vnikhilbuddhavarapu@outlook.com>"
+    }
+  }
+}
