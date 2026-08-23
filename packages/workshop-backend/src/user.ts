@@ -71,6 +71,8 @@ export type UserChatContext = {
   profile: AiChatAuthorInfo;
   aiModel?: UserAiModelRecord;
   quickModel?: AiModelConfig;
+  // Access groups from the user's most recent Cf-Access login, used for tier derivation.
+  groups: string[];
 }
 
 type LoginSessionRecord = {
@@ -195,6 +197,9 @@ function makeUserStorage(storage: DurableObjectStorage) {
       preferredModel: <string | null>null,
       onboardingCompleted: false,
 
+      // Access groups from the user's most recent Cf-Access login, used for tier derivation.
+      groups: <string[]>[],
+
       // Set once the user's pre-existing workspaces have been asked to populate the outputs index
       // (see #backfillOutputs()). Workspaces created since push on their own.
       outputsBackfilled: false,
@@ -308,7 +313,9 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
   // Returns true when this login created the account on first use. When the account doesn't yet
   // exist and `allowCreate` is false (deployment signups are closed), refuses rather than creating —
   // existing users can still sign in.
-  async authenticateFromCfAccess(email: string, allowCreate: boolean): Promise<boolean> {
+  async authenticateFromCfAccess(email: string, allowCreate: boolean, groups: readonly string[] = []): Promise<boolean> {
+    this.storage.groups.put([...groups]);
+
     if (!this.storage.created.get()) {
       if (!allowCreate) {
         throw new Error("New sign-ups are currently disabled on this deployment.");
@@ -667,7 +674,8 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
     let gwConfig = getAiGatewayConfig(this.env);
 
     let result: UserChatContext = {
-      profile: this.storage.profile.get()
+      profile: this.storage.profile.get(),
+      groups: this.storage.groups.get(),
     };
     if (modelId) {
       // In AI Gateway mode, resolve gateway models first.

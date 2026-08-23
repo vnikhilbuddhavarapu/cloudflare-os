@@ -7,10 +7,10 @@
     "moduleResolution": "bundler",
     "types": ["./worker-configuration.d.ts"],
     "outDir": "./dist",
+    "rootDir": "..",
     "declaration": true,
     "sourceMap": true,
     "noEmit": false,
-    "baseUrl": ".",
     "paths": {
       "@gadgets/typed-storage": ["../typed-storage/src/index.ts"],
       "@gadgets/workshop-shared/*": ["../workshop-shared/src/*"]

@@ -25,6 +25,7 @@ import { RpcStub as NativeRpcStub } from "cloudflare:workers";
 import { recordAnalytics } from "./analytics";
 import { handleClientErrorRequest } from "./client-errors.js";
 import { verifyCfAccessJwt } from "./access.js";
+import { flattenGroups } from "./tiers.js";
 import { resolveUiFeatureFlags } from "./feature-flags";
 import { serveSiteLogo, SITE_LOGO_PATH } from "./site-logo.js";
 import { createWorkshopLogger } from "./observability";
@@ -687,7 +688,8 @@ class PublicApiImpl extends RpcTarget implements PublicApi {
     let userId = this.users.idFromName(email);
     let stub = this.users.get(userId);
     let signupsEnabled = (await readAdminConfig(this.env)).signupsEnabled;
-    let accountCreated = await stub.authenticateFromCfAccess(email, signupsEnabled);
+    let groups = flattenGroups(this.accessPayload);
+    let accountCreated = await stub.authenticateFromCfAccess(email, signupsEnabled, groups);
     if (accountCreated) {
       recordAnalytics(this.ctx, this.env, {
         event_name: "account_created",

@@ -96,9 +96,8 @@ describe("getModel AI Gateway routing", () => {
     expect(request.headers.get("authorization")).toBeNull();
     expect(JSON.parse(request.headers.get("cf-aig-metadata")!)).toEqual({
       user: "user-123",
-      source: "chat",
-      gadgetId: "gadget-123",
-      chatId: 7,
+      tier: "restricted",
+      source: "chat:gadget=gadget-123#7",
     });
   }, 15000);
 
@@ -132,9 +131,8 @@ describe("getModel AI Gateway routing", () => {
     const request = await captureRequest(handle);
     expect(JSON.parse(request.headers.get("cf-aig-metadata")!)).toEqual({
       user: "owner-456",
-      source: "thread-title",
-      gadgetId: "gadget-456",
-      chatId: 8,
+      tier: "restricted",
+      source: "thread-title:gadget=gadget-456#8",
       automated: true,
     });
   }, 15000);
@@ -182,9 +180,8 @@ describe("getModel AI Gateway routing", () => {
     expect(request.headers.get("cf-aig-authorization")).toBe("Bearer user-token");
     expect(JSON.parse(request.headers.get("cf-aig-metadata")!)).toEqual({
       user: "user-123",
-      source: "chat",
-      gadgetId: "gadget-789",
-      chatId: 9,
+      tier: "restricted",
+      source: "chat:gadget=gadget-789#9",
     });
   }, 15000);
 
@@ -364,6 +361,24 @@ describe("getModel direct routing (no gateway)", () => {
       expect(handle.model.baseUrl).toBe("http://my-ollama:11434/v1");
     }
   });
+
+  it("keeps cf-aig-metadata within the 5-entry limit and uses no cf.* keys", async () => {
+    const handle = getModel(env(), ANTHROPIC_CONFIG, GADGET_INITIATOR, {
+      metadata: { source: "chat", gadgetId: "gadget-cap", chatId: 99, tier: "frontier" },
+    });
+
+    const request = await captureRequest(handle);
+    const metadata = JSON.parse(request.headers.get("cf-aig-metadata")!);
+    const keys = Object.keys(metadata);
+    expect(keys.length).toBeLessThanOrEqual(5);
+    expect(keys.every((k) => !k.startsWith("cf."))).toBe(true);
+    expect(metadata).toEqual({
+      user: "owner-456",
+      tier: "frontier",
+      source: "chat:gadget=gadget-cap#99",
+      automated: true,
+    });
+  }, 15000);
 });
 
 describe("PDF attachment bridging", () => {

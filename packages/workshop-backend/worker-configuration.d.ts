@@ -12,6 +12,7 @@ interface __BaseEnv_Env {
 	ADMINS: string;
 	AUTH_GATEKEEPERS: string;
 	DISABLE_PASSWORD_AUTH: string;
+	TIERS_CONFIG?: string;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {
