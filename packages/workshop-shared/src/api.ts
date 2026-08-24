@@ -967,10 +967,35 @@ export const SUGGESTED_MODELS: Record<
     "@cf/zai-org/glm-5.2": {
       name: "GLM 5.2 (Workers AI)", contextWindow: 262144, outputLimit: WORKERS_AI_OUTPUT_LIMIT,
     },
+    "@cf/deepseek-ai/deepseek-v4-flash-0731": {
+      name: "DeepSeek V4 Flash 0731 (Workers AI)", contextWindow: 1048576,
+      outputLimit: WORKERS_AI_OUTPUT_LIMIT,
+    },
+    "@cf/moonshotai/kimi-k2.6": {
+      name: "Kimi K2.6 (Workers AI)", contextWindow: 262144,
+      outputLimit: WORKERS_AI_OUTPUT_LIMIT,
+    },
+    "@cf/meta/llama-4-scout-17b-16e-instruct": {
+      name: "Llama 4 Scout 17B (Workers AI)", contextWindow: 131000,
+      outputLimit: WORKERS_AI_OUTPUT_LIMIT,
+    },
+    "@cf/google/gemma-4-26b-a4b-it": {
+      name: "Gemma 4 26B (Workers AI)", contextWindow: 131072,
+      outputLimit: WORKERS_AI_OUTPUT_LIMIT,
+    },
+    "@cf/nvidia/nemotron-3-120b-a12b": {
+      name: "Nemotron 3 120B (Workers AI)", contextWindow: 256000,
+      outputLimit: WORKERS_AI_OUTPUT_LIMIT,
+    },
+    "@cf/meta/llama-3.3-70b-instruct-fp8-fast": {
+      name: "Llama 3.3 70B Fast (Workers AI)", contextWindow: 24000,
+      outputLimit: WORKERS_AI_OUTPUT_LIMIT,
+    },
   },
   "anthropic": {
-    // TODO: Include Fable -- but we need an admin option to disable it, since many orgs don't
-    //   allow it for ZDR reasons. It's sort of overkill for building gadgets anyway.
+    // Intentionally enabled for this deployment (ACME Studios). The upstream kernel omits Fable
+    // by default for ZDR reasons, but this fork opts in.
+    "claude-fable-5": {name: "Claude Fable 5", contextWindow: 1000000},
     "claude-opus-5": {name: "Claude Opus 5", contextWindow: 1000000},
     "claude-sonnet-5": {name: "Claude Sonnet 5", contextWindow: 1000000},
     "claude-haiku-4-5": {name: "Claude Haiku 4.5", contextWindow: 200000},

@@ -12,6 +12,7 @@ import type { AdminSettings } from "./admin-settings.js";
 import { isReservedBlueprintKey, readBlueprintKvRecord } from "./blueprint-archive.js";
 import { filterEnabledResources, isResourceDisabled, readAdminConfig } from "./admin-config.js";
 import { buildGatekeeperVendorMap } from "./auth/auth-vendors.js";
+import { deriveTier, parseTierConfig, allowedModelsForTier, modelEntriesForTier, defaultModelForTier } from "./tiers.js";
 
 const logger = createWorkshopLogger("workshop.user");
 
@@ -512,12 +513,22 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
   async listModels(): Promise<AiChatAuthorInfo[]> {
     let result: AiChatAuthorInfo[] = [];
 
-    // When AI Gateway mode is active, include all suggested models for enabled providers.
     let gwConfig = getAiGatewayConfig(this.env);
     let gwModelIds = new Set<string>();
     if (gwConfig) {
+      let tier = deriveTier(this.storage.groups.get(), parseTierConfig(this.env.TIERS_CONFIG));
+      let allowed = allowedModelsForTier(tier, parseTierConfig(this.env.TIERS_CONFIG));
+      let entries = modelEntriesForTier(tier, parseTierConfig(this.env.TIERS_CONFIG));
+      // entries maps id -> {id, label?} for label overrides; allowed is the Set for membership.
+      let labelMap = new Map<string, string | undefined>();
+      if (entries) for (let e of entries) labelMap.set(e.id, e.label);
+
       for (let entry of gwConfig.getModelList()) {
-        result.push(entry);
+        // Filter: if the tier has an allowlist, only include allowed models.
+        if (allowed && !allowed.has(entry.id)) continue;
+        // Label override: if the tier config specifies a custom label, use it.
+        let label = labelMap.get(entry.id);
+        result.push(label ? { ...entry, name: label } : entry);
         gwModelIds.add(entry.id);
       }
     }
@@ -686,6 +697,15 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
         result.aiModel = this.storage.aiModels.get(modelId);
       }
       if (!result.aiModel) throw new Error(`No such model: ${modelId}`);
+      // Enforce per-tier model allowlist on gateway models (security gate).
+      // This catches crafted/replayed requests naming a disallowed model.
+      if (gwConfig && result.aiModel) {
+        let tier = deriveTier(result.groups, parseTierConfig(this.env.TIERS_CONFIG));
+        let allowed = allowedModelsForTier(tier, parseTierConfig(this.env.TIERS_CONFIG));
+        if (allowed && !allowed.has(modelId)) {
+          throw new Error(`Model "${modelId}" is not available for your access tier.`);
+        }
+      }
     }
 
     // Resolve the quick model (used for lightweight tasks like title generation).
@@ -706,10 +726,19 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
 
   async getExternalMessageChatContext(existingChatModelId: string | null): Promise<UserChatContext> {
     let models = await this.listModels();
-    // Prefer the existing chat's model, then the user's preferred model, then the first available model.
+    // Prefer the existing chat's model, then the user's preferred model, then the tier default,
+    // then the first available model.
     let selectedModel = models.find(model => model.id === existingChatModelId)
-      ?? models.find(model => model.id === this.storage.preferredModel.get())
-      ?? models[0];
+      ?? models.find(model => model.id === this.storage.preferredModel.get());
+
+    if (!selectedModel) {
+      let tier = deriveTier(this.storage.groups.get(), parseTierConfig(this.env.TIERS_CONFIG));
+      let tierDefault = defaultModelForTier(tier, parseTierConfig(this.env.TIERS_CONFIG));
+      if (tierDefault) {
+        selectedModel = models.find(model => model.id === tierDefault);
+      }
+    }
+    selectedModel ??= models[0];
 
     return this.getChatContext(selectedModel?.id ?? null);
   }
