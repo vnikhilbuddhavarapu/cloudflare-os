@@ -1,0 +1,19 @@
+packages/workshop-backend/src/server.ts
+  s_a10f45aa10a9ca::t_eed7e94c995a3f 865-877
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c1bc5a4804e98f2ba9174a8f0cbf2edbc400c37c",
+  "prompts": {},
+  "sessions": {
+    "s_a10f45aa10a9ca": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "exciting-polonium",
+        "model": "unknown"
+      },
+      "human_author": "Nikhil <vnikhilbuddhavarapu@outlook.com>"
+    }
+  }
+}
