@@ -862,6 +862,19 @@ export default {
       return resp;
     }
 
+    // When the Workshop is the public origin (no separate router worker), dispatch
+    // /gatekeeper/<name>/* to the matching GATEKEEPER_* service binding — the same logic the
+    // router worker uses (packages/router/src/index.ts). Installing a gatekeeper is purely a
+    // binding change; this loop discovers it automatically.
+    for (const key of Object.keys(env)) {
+      if (!key.startsWith("GATEKEEPER_")) continue;
+      const suffix = key.slice("GATEKEEPER_".length).toLowerCase().replaceAll("_", "-");
+      const prefix = `/gatekeeper/${suffix}`;
+      if (url.pathname === prefix || url.pathname.startsWith(prefix + "/")) {
+        return (env[key as keyof Env] as unknown as Fetcher).fetch(req);
+      }
+    }
+
     return new Response("Not Found", {status: 404});
   }
 } satisfies ExportedHandler<Env>;
