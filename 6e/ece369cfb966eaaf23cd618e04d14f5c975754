@@ -1,0 +1,25 @@
+packages/workshop-backend/__tests__/tiers.test.ts
+  s_a10f45aa10a9ca::t_32e58d119fd3f8 2,109-246
+packages/workshop-backend/src/tiers.ts
+  s_a10f45aa10a9ca::t_513155c380397d 3-8,10-16,18,75-119
+packages/workshop-backend/src/user.ts
+  s_a10f45aa10a9ca::t_a0c66468750531 15,519-525,527-531,700-708,729-730,732-741
+packages/workshop-shared/src/api.ts
+  s_a10f45aa10a9ca::t_00514622fc3541 970-993,996-998
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6eece369cfb966eaaf23cd618e04d14f5c975754",
+  "prompts": {},
+  "sessions": {
+    "s_a10f45aa10a9ca": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "exciting-polonium",
+        "model": "unknown"
+      },
+      "human_author": "Nikhil <vnikhilbuddhavarapu@outlook.com>"
+    }
+  }
+}
