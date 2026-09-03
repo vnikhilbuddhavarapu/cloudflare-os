@@ -862,19 +862,6 @@ export default {
       return resp;
     }
 
-    // When the Workshop is the public origin (no separate router worker), dispatch
-    // /gatekeeper/<name>/* to the matching GATEKEEPER_HTTP_* service binding. These point at the
-    // gatekeeper workers' default export (HTTP fetch), not the GatekeeperVendor RPC entrypoint.
-    // The GATEKEEPER_* (non-HTTP) bindings are RPC-only and don't handle fetch.
-    for (const key of Object.keys(env)) {
-      if (!key.startsWith("GATEKEEPER_HTTP_")) continue;
-      const suffix = key.slice("GATEKEEPER_HTTP_".length).toLowerCase().replaceAll("_", "-");
-      const prefix = `/gatekeeper/${suffix}`;
-      if (url.pathname === prefix || url.pathname.startsWith(prefix + "/")) {
-        return (env[key as keyof Env] as unknown as Fetcher).fetch(req);
-      }
-    }
-
     return new Response("Not Found", {status: 404});
   }
 } satisfies ExportedHandler<Env>;
