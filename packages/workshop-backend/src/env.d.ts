@@ -15,21 +15,21 @@ declare global {
 
       // AI Gateway mode: when CF_AI_GATEWAY is set, supported providers are routed through
       // Cloudflare AI Gateway with server-managed keys. Users don't need their own keys.
-      CF_AI_GATEWAY?: string;            // Gateway name (enables gateway mode)
-      CF_AI_GATEWAY_PROVIDERS?: string;   // Comma-separated list: "anthropic,openai,google,cloudflare"
-      CF_AI_GATEWAY_ACCOUNT_ID?: string;  // Gateway owner account ID (required with CF_AI_GATEWAY)
-      CF_AI_GATEWAY_API_TOKEN?: string;   // Run + Read token; optional when the binding transport
-                                          // applies (still required for google)
+      CF_AI_GATEWAY?: string; // Gateway name (enables gateway mode)
+      CF_AI_GATEWAY_PROVIDERS?: string; // Comma-separated list: "anthropic,openai,google,cloudflare"
+      CF_AI_GATEWAY_ACCOUNT_ID?: string; // Gateway owner account ID (required with CF_AI_GATEWAY)
+      CF_AI_GATEWAY_API_TOKEN?: string; // Run + Read token; optional when the binding transport
+      // applies (still required for google)
       CF_AI_GATEWAY_USE_BINDING?: string;
       // Note: outside gateway mode, Workers AI (provider "cloudflare") is BYOK like every other
       // provider -- the account ID and API token live in the user's model config, not in env.
 
       // Blueprint storage bindings.
-      BLUEPRINTS: KVNamespace;             // Workers KV for blueprint metadata lookup
-      BLUEPRINT_CONTENT: R2Bucket;         // R2 bucket for blueprint code snapshots
+      BLUEPRINTS: KVNamespace; // Workers KV for blueprint metadata lookup
+      BLUEPRINT_CONTENT: R2Bucket; // R2 bucket for blueprint code snapshots
 
       // User avatar storage.
-      AVATARS: KVNamespace;                // Workers KV for user avatar images
+      AVATARS: KVNamespace; // Workers KV for user avatar images
 
       // Note: gatekeeper service bindings (GATEKEEPER_*) are intentionally NOT declared here. Core
       // discovers them generically by scanning env for the GATEKEEPER_ prefix (buildGatekeeperVendorMap)
@@ -58,8 +58,8 @@ declare global {
 
       // Cloudflare Access configuration. When CF_ACCESS_AUD is set, the deployment authenticates via
       // Cloudflare Access (SSO). (Also referenced via a local Env extension in server.ts.)
-      CF_ACCESS_AUD?: string;   // audience
-      CF_ACCESS_ISS?: string;   // team URL, e.g. https://<team>.cloudflareaccess.com
+      CF_ACCESS_AUD?: string; // audience
+      CF_ACCESS_ISS?: string; // team URL, e.g. https://<team>.cloudflareaccess.com
 
       // Comma-separated allowlist of gatekeeper vendor ids permitted to drive sign-in (e.g.
       // "google,github,cloudflare"). A listed gatekeeper must also advertise providesAuth. Empty =
@@ -76,6 +76,10 @@ declare global {
 
       // Public base URL of the deployment.
       PUBLIC_BASE_URL?: string;
+
+      // Per-tier model allowlist mapping (JSON string). When set, the Workshop filters
+      // available models based on the user's Access groups. See tiers.ts.
+      TIERS_CONFIG?: string;
 
       // Daily free-tier LLM-call limit (per user). Defaults to DEFAULT_DAILY_LLM_CALL_LIMIT.
       DAILY_LLM_CALL_LIMIT?: string;
