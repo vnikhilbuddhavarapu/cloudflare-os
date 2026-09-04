@@ -350,7 +350,7 @@ export class UserAccount extends DurableObject<Env> {
     if (identity) this.ctx.storage.kv.put<AtlassianIdentity>("identity", identity);
   }
 
-  // Returns a usable access token, refreshing proactively if it is near expiry.
+  /** Returns a usable access token, refreshing proactively if it is near expiry. */
   async getAccessToken(): Promise<string> {
     const grant = this.ctx.storage.kv.get<StoredGrant>("grant");
     if (!grant) throw new ConfluenceApiError(401, "No Confluence credentials set.");
@@ -568,7 +568,7 @@ function makeApi(ctx: { exports: Cloudflare.Env }, props: BaseProps): Confluence
 @validateRpc()
 export class ConfluenceSiteGatekeeperImpl extends DurableObject<Env, SiteGatekeeperProps>
     implements Gatekeeper<ConfluenceSiteSession> {
-  #store() { return new ConfluenceStore(this.ctx.storage.kv, makeApi(this.ctx, this.ctx.props)); }
+  #store() { return new ConfluenceStore(this.ctx.storage, makeApi(this.ctx, this.ctx.props)); }
   #tracker() { return new ConfluenceObserverTracker(this.ctx.storage.kv, this.ctx.props.cloudId); }
 
   async describe(): Promise<ResourceDescription> {
@@ -595,8 +595,10 @@ export class ConfluenceSiteGatekeeperImpl extends DurableObject<Env, SiteGatekee
       sets => this.#tracker().prepareObservation(sets));
   }
 
-  // Site membership is the baseline for site metadata/current-user reads. The tracker separately
-  // verifies every restricted space and content item revealed through this broad binding.
+  /**
+   * Site membership is the baseline for site metadata/current-user reads. The tracker separately
+   * verifies every restricted space and content item revealed through this broad binding.
+   */
   async addObserver(id: string, user: Fetcher<GatekeeperUserVerifier>): Promise<void> {
     const verifier = user as unknown as Fetcher<ConfluenceVerifierApi>;
     if (!(await verifier.hasSiteAccess(this.ctx.props.cloudId))) {
@@ -615,7 +617,7 @@ export class ConfluenceSiteGatekeeperImpl extends DurableObject<Env, SiteGatekee
 @validateRpc()
 export class ConfluenceSpaceGatekeeperImpl extends DurableObject<Env, SpaceGatekeeperProps>
     implements Gatekeeper<ConfluenceSpaceSession> {
-  #store() { return new ConfluenceStore(this.ctx.storage.kv, makeApi(this.ctx, this.ctx.props)); }
+  #store() { return new ConfluenceStore(this.ctx.storage, makeApi(this.ctx, this.ctx.props)); }
   #tracker() { return new ConfluenceObserverTracker(this.ctx.storage.kv, this.ctx.props.cloudId); }
 
   async describe(): Promise<ResourceDescription> {
@@ -639,8 +641,10 @@ export class ConfluenceSpaceGatekeeperImpl extends DurableObject<Env, SpaceGatek
       sets => this.#tracker().prepareObservation(sets));
   }
 
-  // Space access is the baseline; pages and blog posts are tracked independently because
-  // Confluence content restrictions may be narrower than the containing space.
+  /**
+   * Space access is the baseline; pages and blog posts are tracked independently because
+   * Confluence content restrictions may be narrower than the containing space.
+   */
   async addObserver(id: string, user: Fetcher<GatekeeperUserVerifier>): Promise<void> {
     const verifier = user as unknown as Fetcher<ConfluenceVerifierApi>;
     if (!(await verifier.hasSpaceAccess(this.ctx.props.cloudId, this.ctx.props.spaceKey))) {
@@ -659,7 +663,7 @@ export class ConfluenceSpaceGatekeeperImpl extends DurableObject<Env, SpaceGatek
 @validateRpc()
 export class ConfluenceContentGatekeeperImpl extends DurableObject<Env, ContentGatekeeperProps>
     implements Gatekeeper<ConfluenceContentSession> {
-  #store() { return new ConfluenceStore(this.ctx.storage.kv, makeApi(this.ctx, this.ctx.props)); }
+  #store() { return new ConfluenceStore(this.ctx.storage, makeApi(this.ctx, this.ctx.props)); }
   #tracker() { return new ConfluenceObserverTracker(this.ctx.storage.kv, this.ctx.props.cloudId); }
 
   async describe(): Promise<ResourceDescription> {
@@ -684,8 +688,10 @@ export class ConfluenceContentGatekeeperImpl extends DurableObject<Env, ContentG
       sets => this.#tracker().prepareObservation(sets));
   }
 
-  // Access to the bound page/blog post is the baseline. Child pages remain tracked sets because a
-  // descendant can have stricter restrictions than its parent.
+  /**
+   * Access to the bound page/blog post is the baseline. Child pages remain tracked sets because a
+   * descendant can have stricter restrictions than its parent.
+   */
   async addObserver(id: string, user: Fetcher<GatekeeperUserVerifier>): Promise<void> {
     const verifier = user as unknown as Fetcher<ConfluenceVerifierApi>;
     if (!(await verifier.hasContentAccess(this.ctx.props.cloudId, this.ctx.props.contentId))) {
@@ -1131,14 +1137,16 @@ class ContentSessionImpl extends RpcTarget implements ConfluenceContentSession {
   }
 
   async uploadAttachment(options: UploadAttachmentOptions): Promise<Attachment> {
+    // Staging deletes the action, and its file with it, if approval submission fails.
+    const file = await this.#store.captureAttachment(options.data);
     await this.#stage({
       type: "uploadAttachment", contentId: this.#contentId,
-      filename: options.filename, mediaType: options.mediaType, data: options.data, comment: options.comment,
+      filename: options.filename, mediaType: options.mediaType, file, comment: options.comment,
     });
     // Reflect the pending upload optimistically (it isn't applied until approved). Use a fresh
     // provisional id (like createContent) so concurrent pending uploads don't share one id.
     return { id: this.#store.nextProvisionalId(), title: options.filename, mediaType: options.mediaType,
-      fileSize: options.data.byteLength, version: 1, createdAt: new Date() };
+      fileSize: file.size, version: 1, createdAt: new Date() };
   }
 
   async trash(): Promise<void> {
