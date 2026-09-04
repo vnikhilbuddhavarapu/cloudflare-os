@@ -1,0 +1,19 @@
+FORK_NOTES.md
+  s_a8e92ecdc2a8eb::t_2d6fd5e41ae706 25-27,29-34,37,39-40,46,48-50,53-55,57-72,74-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "50dd566d8a8f7941f5c401d05f19aff08d7f67ed",
+  "prompts": {},
+  "sessions": {
+    "s_a8e92ecdc2a8eb": {
+      "agent_id": {
+        "tool": "devin",
+        "id": "s_a8e92ecdc2a8eb",
+        "model": "unknown"
+      },
+      "human_author": "Nikhil <vnikhilbuddhavarapu@outlook.com>"
+    }
+  }
+}
