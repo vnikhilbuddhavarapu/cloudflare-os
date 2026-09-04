@@ -1,0 +1,19 @@
+packages/workshop-backend/src/env.d.ts
+  s_52c4f6bedcd394::t_ae8b3d679a24e4 18-22,28-29,32,61-62,80-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "099fb5ddab7240b917157e0e7b3a6b5ff157dcbf",
+  "prompts": {},
+  "sessions": {
+    "s_52c4f6bedcd394": {
+      "agent_id": {
+        "tool": "devin",
+        "id": "s_52c4f6bedcd394",
+        "model": "unknown"
+      },
+      "human_author": "Nikhil <vnikhilbuddhavarapu@outlook.com>"
+    }
+  }
+}
