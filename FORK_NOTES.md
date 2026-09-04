@@ -6,11 +6,11 @@ Never open PRs to upstream. Pull updates via git rebase of `acme-main` onto the 
 
 ## ACME customizations (clean re-port on 2026-09-04 against upstream 8727352)
 
-This branch (`sprint-6-clean-report`) is a clean re-port of the ACME customizations onto upstream `8727352`, replacing the previous branch (`sprint-6-upstream-mcp-upgrade-kernel` / `75873e5`) which carried significant formatting churn.
+Merged to `acme-main` as `c9bbe94` (kernel) and `main` as `55b1531` (starter). Tagged `sprint-6-green` in both repos at those SHAs.
 
 ### Sprint 3 — Tier metadata
 
-`GatewayMetadata` in `ai-models.ts` carries `user`, `tier`, composite `source`, and `automated` (max 5 AI Gateway metadata entries). Tier is derived from Access groups via `tiers.ts` and threaded through `overseer.ts` (`startAgent`/`#runAgentTurn`/`generateThreadTitle`).
+`GatewayMetadata` in `ai-models.ts` carries `user`, `tier`, composite `source`, and `automated` (max 5 AI Gateway metadata entries). Tier is derived from Access groups via `tiers.ts` and threaded through `overseer.ts` (`startAgent`/`#runAgentTurn`/`generateThreadTitle`/`generateBindingName`).
 
 ### Sprint 5 — Per-tier model allowlist
 
@@ -19,6 +19,27 @@ This branch (`sprint-6-clean-report`) is a clean re-port of the ACME customizati
 ### CI
 
 `.github/workflows/ci.yml` runs kernel lint/build/test on `acme-main`.
+
+## Sprint 6 verified state
+
+| Repo                   | Branch      | SHA                                        | Tag             |
+| ---------------------- | ----------- | ------------------------------------------ | --------------- |
+| cloudflare-os (kernel) | `acme-main` | `c9bbe94223d6ff620f53217b7d0c915740217fff` | `sprint-6-green` |
+| acme-os (starter)      | `main`      | `55b1531a9b57913d1b102df91cf3266db6c457c9` | `sprint-6-green` |
+
+Starter `main` submodule pointer: `c9bbe94223d6ff620f53217b7d0c915740217fff` in `vnikhilbuddhavarapu/cloudflare-os`.
+
+### Merged-main Worker version IDs (production)
+
+| Worker                 | Version ID                              |
+| ---------------------- | --------------------------------------- |
+| acme-os-router         | `c5532312-1e4e-4f9c-af09-a3ed64127501`  |
+| acme-os-workshop       | `1f35c353-08bc-4682-a025-4a7980779d44`  |
+| acme-os-context        | `c9e36b92-827d-4f1a-9860-48dec0b05554`  |
+| acme-os-scheduler      | `ff559931-44b6-4d70-bdba-dcfc9e195d87`  |
+| acme-os-custom-gk      | `4f359542-3db3-4899-b1bc-f76cd307ce75`  |
+| acme-os-gk-mcp-portal  | `d1116a45-4fd5-4205-aac9-94b1a5714bb4`  |
+| acme-os-error-reporter | `43c49e10-3a04-46d4-beac-5626185f4319`  |
 
 ## Rollback plan
 
