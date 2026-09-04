@@ -1202,8 +1202,9 @@ const SUGGESTED_MODEL_CATALOG = {
     },
   },
   "anthropic": {
-    // TODO: Include Fable -- but we need an admin option to disable it, since many orgs don't
-    //   allow it for ZDR reasons. It's sort of overkill for building gadgets anyway.
+    // Intentionally enabled for this deployment (ACME Studios). The upstream kernel omits Fable
+    // by default for ZDR reasons, but this fork opts in.
+    "claude-fable-5": {name: "Claude Fable 5", contextWindow: 1000000},
     "claude-opus-5": {name: "Claude Opus 5", contextWindow: 1000000},
     "claude-sonnet-5": {name: "Claude Sonnet 5", contextWindow: 1000000},
     "claude-haiku-4-5": {name: "Claude Haiku 4.5", contextWindow: 200000},
