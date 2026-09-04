@@ -22,40 +22,66 @@ This branch (`sprint-6-clean-report`) is a clean re-port of the ACME customizati
 
 ## Rollback plan
 
+Rollback uses immutable tags — never force-push or reset shared branches. Instead, check out the pre-upgrade tag on a dedicated rollback branch and redeploy from there.
+
+### Immutable rollback points
+
+| Repo                   | Tag                               | SHA                                        |
+| ---------------------- | --------------------------------- | ------------------------------------------ |
+| cloudflare-os (kernel) | `pre-upstream-mcp-upgrade-kernel` | `1bb03f02bc0dd7003e3b67776783210d5626611d` |
+| acme-os (starter)      | `pre-upstream-mcp-upgrade`        | `0fca6919624ccbead1f37048b215acca2f68b2d2` |
+
 ### Kernel rollback
 
-To roll back the kernel to the previous known-good state:
-
 ```bash
+# Create a dedicated rollback branch from the immutable tag — do NOT reset acme-main.
 cd cloudflare-os
-git checkout acme-main
-# The previous kernel commit was 75873e5 (sprint-6-upstream-mcp-upgrade-kernel)
-# The clean re-port is f172864 (sprint-6-clean-report)
-git reset --hard 75873e5
-git push origin acme-main --force
+git checkout -b rollback/pre-upstream-mcp-upgrade-kernel pre-upstream-mcp-upgrade-kernel
+# Redeploy from this branch (see starter rollback below for the submodule pointer).
 ```
 
 ### Starter rollback
 
-To roll back the starter submodule pointer:
-
 ```bash
+# Create a dedicated rollback branch from the immutable tag — do NOT reset main.
 cd acme-os
-git checkout main
-# The previous starter commit was 6467e70 (pointing to kernel 75873e5)
-git reset --hard 6467e70
-git push origin main --force
+git checkout -b rollback/pre-upstream-mcp-upgrade pre-upstream-mcp-upgrade
+# The submodule pointer in this tag points to kernel 1bb03f02.
+# Redeploy: pnpm deploy
 ```
 
-### Production Worker rollback
+### Production Worker rollback (fast, no code change)
 
-Use `wrangler deployments rollback` for each affected Worker, or pin to the version IDs captured before the upgrade:
+Use `wrangler deployments rollback` for each affected Worker to instantly revert to the previous version:
 
-| Worker | Pre-upgrade version ID |
-|--------|----------------------|
-| router | (captured via `wrangler deployments list`) |
-| workshop-backend | (captured via `wrangler deployments list`) |
-| gatekeeper-* | (captured via `wrangler deployments list`) |
+```bash
+CLOUDFLARE_ACCOUNT_ID=904dd3d810f6f1dd3801d8b940bd747a \
+  npx wrangler deployments rollback --name acme-os-router
+CLOUDFLARE_ACCOUNT_ID=904dd3d810f6f1dd3801d8b940bd747a \
+  npx wrangler deployments rollback --name acme-os-workshop
+CLOUDFLARE_ACCOUNT_ID=904dd3d810f6f1dd3801d8b940bd747a \
+  npx wrangler deployments rollback --name acme-os-context
+CLOUDFLARE_ACCOUNT_ID=904dd3d810f6f1dd3801d8b940bd747a \
+  npx wrangler deployments rollback --name acme-os-scheduler
+CLOUDFLARE_ACCOUNT_ID=904dd3d810f6f1dd3801d8b940bd747a \
+  npx wrangler deployments rollback --name acme-os-custom-gk
+CLOUDFLARE_ACCOUNT_ID=904dd3d810f6f1dd3801d8b940bd747a \
+  npx wrangler deployments rollback --name acme-os-gk-mcp-portal
+CLOUDFLARE_ACCOUNT_ID=904dd3d810f6f1dd3801d8b940bd747a \
+  npx wrangler deployments rollback --name acme-os-error-reporter
+```
+
+Pre-upgrade version IDs (for manual pinning if needed):
+
+| Worker                 | Pre-upgrade version ID                 |
+| ---------------------- | -------------------------------------- |
+| acme-os-router         | `370a06e5-8227-4daa-b3b6-9f50447d33a2` |
+| acme-os-workshop       | `6a24f442-f985-4438-9932-c40ae80f1af8` |
+| acme-os-context        | `aeb522c2-eb2c-453f-a8cc-e0e040f28bb2` |
+| acme-os-scheduler      | (did not exist)                        |
+| acme-os-custom-gk      | `96d6d364-7ff8-4630-a310-f931023d2405` |
+| acme-os-gk-mcp-portal  | `d58db997-6af7-494e-a6aa-263867c7cca3` |
+| acme-os-error-reporter | `89a3e154-41b1-4ceb-9d22-8171591a436c` |
 
 ## Removed hacks
 
