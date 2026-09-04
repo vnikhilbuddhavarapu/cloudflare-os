@@ -1,0 +1,25 @@
+packages/workshop-backend/__tests__/ai-models.test.ts
+  s_a10f45aa10a9ca::t_b22ddaa0e2215c 502-519
+packages/workshop-backend/src/overseer.ts
+  s_a10f45aa10a9ca::t_f86a6840e1d4d8 26,7603,7605-7607,7640,7647,8361-8362,8372,8374,10827-10828,10996-10997
+packages/workshop-backend/src/server.ts
+  s_a10f45aa10a9ca::t_55122328680f3c 29
+packages/workshop-shared/src/api.ts
+  s_a10f45aa10a9ca::t_34106557269164 1205-1207
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2521e0141988c598120ace2140cade659c4b0dbe",
+  "prompts": {},
+  "sessions": {
+    "s_a10f45aa10a9ca": {
+      "agent_id": {
+        "tool": "windsurf",
+        "id": "exciting-polonium",
+        "model": "unknown"
+      },
+      "human_author": "Nikhil <vnikhilbuddhavarapu@outlook.com>"
+    }
+  }
+}
