@@ -77,6 +77,10 @@ declare global {
       // Public base URL of the deployment.
       PUBLIC_BASE_URL?: string;
 
+      // Per-tier model allowlist mapping (JSON string). When set, the Workshop filters
+      // available models based on the user's Access groups. See tiers.ts.
+      TIERS_CONFIG?: string;
+
       // Daily free-tier LLM-call limit (per user). Defaults to DEFAULT_DAILY_LLM_CALL_LIMIT.
       DAILY_LLM_CALL_LIMIT?: string;
 

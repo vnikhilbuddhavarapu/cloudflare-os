@@ -31,14 +31,16 @@ import { bridgePdfAttachments } from "./chat-attachment-pdf.js";
    apiKey: string;
  }
 
-// Gadgets-owned attribution schema attached to AI Gateway requests.
+// Gadgets-owned attribution schema attached to AI Gateway requests. AI Gateway allows at most 5
+// custom metadata entries per request, so gadgetId and chatId are folded into `source` as a
+// composite string to keep the total entry count within budget (user + tier + source + automated).
 type GatewayMetadata = {
   // Stable Gadgets user identifier for attribution.
   user: string;
-  // Gadgets execution context, present when the call is associated with a gadget operation.
-  source?: GatewayMetadataContext["source"];
-  gadgetId?: string;
-  chatId?: number;
+  // User's service tier (frontier / standard / restricted), always present.
+  tier: string;
+  // Composite execution context, e.g. "chat:gadget=<id>#<chatId>".
+  source?: string;
   // Distinguishes gadget-initiated model calls from interactive user calls.
   automated?: true;
 };
@@ -47,6 +49,8 @@ type GatewayMetadataContext = {
   source: "chat" | "thread-title" | "gadget-title" | "model-binding";
   gadgetId?: string;
   chatId?: number;
+  // User's service tier, derived from Access groups + config. Defaults to "restricted" when absent.
+  tier?: string;
 };
 
 type ModelRoutingOptions = {
@@ -103,12 +107,21 @@ export type ModelHandle = {
   lastResponse?: { status: number; aiGatewayLogId?: string };
 };
 
-function buildMetadata(initiator: AiChatAuthorInfo, context?: GatewayMetadataContext): GatewayMetadata {
-  const metadata: GatewayMetadata = { user: initiator.id };
+function buildMetadata(
+  initiator: AiChatAuthorInfo,
+  context?: GatewayMetadataContext,
+): GatewayMetadata {
+  const metadata: GatewayMetadata = {
+    user: initiator.id,
+    tier: context?.tier ?? "restricted",
+  };
   if (context) {
-    metadata.source = context.source;
-    if (context.gadgetId) metadata.gadgetId = context.gadgetId;
-    if (context.chatId !== undefined) metadata.chatId = context.chatId;
+    // Fold gadgetId and chatId into the composite source string to stay within AI Gateway's
+    // 5-entry metadata limit (user + tier + source + automated = 4 max).
+    let source = context.source;
+    if (context.gadgetId) source += `:gadget=${context.gadgetId}`;
+    if (context.chatId !== undefined) source += `#${context.chatId}`;
+    metadata.source = source;
   }
   if (initiator.type === "gadget") metadata.automated = true;
   return metadata;

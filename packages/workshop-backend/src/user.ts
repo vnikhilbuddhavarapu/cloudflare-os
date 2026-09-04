@@ -12,6 +12,13 @@ import type { AdminSettings } from "./admin-settings.js";
 import { isReservedBlueprintKey, readBlueprintKvRecord } from "./blueprint-archive.js";
 import { filterEnabledResources, isResourceDisabled, readAdminConfig } from "./admin-config.js";
 import { buildGatekeeperVendorMap } from "./auth/auth-vendors.js";
+import {
+  deriveTier,
+  parseTierConfig,
+  allowedModelsForTier,
+  modelEntriesForTier,
+  defaultModelForTier,
+} from "./tiers.js";
 
 const logger = createWorkshopLogger("workshop.user");
 
@@ -75,6 +82,8 @@ export type UserChatContext = {
   profile: AiChatAuthorInfo;
   aiModel?: UserAiModelRecord;
   quickModel?: AiModelConfig;
+  /** Access groups from the user's most recent Cf-Access login, used for tier derivation. */
+  groups: string[];
 }
 
 type LoginSessionRecord = {
@@ -201,6 +210,9 @@ function makeUserStorage(storage: DurableObjectStorage) {
       preferredModel: <string | null>null,
       onboardingCompleted: false,
 
+      // Access groups from the user's most recent Cf-Access login, used for tier derivation.
+      groups: <string[]>[],
+
       // Set once the user's pre-existing workspaces have been asked to populate the outputs index
       // (see #backfillOutputs()). Workspaces created since push on their own.
       outputsBackfilled: false,
@@ -323,7 +335,12 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
    * exist and `allowCreate` is false (deployment signups are closed), refuses rather than creating —
    * existing users can still sign in.
    */
-  async authenticateFromCfAccess(email: string, allowCreate: boolean): Promise<boolean> {
+  async authenticateFromCfAccess(
+    email: string,
+    allowCreate: boolean,
+    groups: readonly string[] = [],
+  ): Promise<boolean> {
+    this.storage.groups.put([...groups]);
     if (!this.storage.created.get()) {
       if (!allowCreate) {
         throw new Error("New sign-ups are currently disabled on this deployment.");
@@ -532,8 +549,25 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
     let gwConfig = getAiGatewayConfig(this.env);
     let gwModelIds = new Set<string>();
     if (gwConfig) {
+      let tier = deriveTier(
+        this.storage.groups.get(),
+        parseTierConfig(this.env.TIERS_CONFIG),
+      );
+      let allowed = allowedModelsForTier(
+        tier,
+        parseTierConfig(this.env.TIERS_CONFIG),
+      );
+      let entries = modelEntriesForTier(
+        tier,
+        parseTierConfig(this.env.TIERS_CONFIG),
+      );
+      let labelMap = new Map<string, string | undefined>();
+      if (entries) for (let e of entries) labelMap.set(e.id, e.label);
+
       for (let entry of gwConfig.getModelList()) {
-        result.push(entry);
+        if (allowed && !allowed.has(entry.id)) continue;
+        let label = labelMap.get(entry.id);
+        result.push(label ? { ...entry, name: label } : entry);
         gwModelIds.add(entry.id);
       }
     }
@@ -697,7 +731,8 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
     let gwConfig = getAiGatewayConfig(this.env);
 
     let result: UserChatContext = {
-      profile: this.storage.profile.get()
+      profile: this.storage.profile.get(),
+      groups: this.storage.groups.get(),
     };
     if (modelId) {
       // In AI Gateway mode, resolve gateway models first.
@@ -708,6 +743,21 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
         result.aiModel = this.storage.aiModels.get(modelId);
       }
       if (!result.aiModel) throw new Error(`No such model: ${modelId}`);
+
+      // Tier enforcement: reject models not in the user's tier allowlist.
+      let tier = deriveTier(
+        result.groups,
+        parseTierConfig(this.env.TIERS_CONFIG),
+      );
+      let allowed = allowedModelsForTier(
+        tier,
+        parseTierConfig(this.env.TIERS_CONFIG),
+      );
+      if (allowed && !allowed.has(modelId)) {
+        throw new Error(
+          `Model "${modelId}" is not available for tier "${tier}".`,
+        );
+      }
     }
 
     // Resolve the quick model (used for lightweight tasks like title generation).
@@ -728,9 +778,14 @@ export class UserDurableObject extends DurableObject<Cloudflare.Env> {
 
   async getExternalMessageChatContext(existingChatModelId: string | null): Promise<UserChatContext> {
     let models = await this.listModels();
-    // Prefer the existing chat's model, then the user's preferred model, then the first available model.
+    let tierConfig = parseTierConfig(this.env.TIERS_CONFIG);
+    let tier = deriveTier(this.storage.groups.get(), tierConfig);
+    let tierDefault = defaultModelForTier(tier, tierConfig);
+    // Prefer the existing chat's model, then the user's preferred model, then the tier default,
+    // then the first available model.
     let selectedModel = models.find(model => model.id === existingChatModelId)
       ?? models.find(model => model.id === this.storage.preferredModel.get())
+      ?? (tierDefault ? models.find(model => model.id === tierDefault) : undefined)
       ?? models[0];
 
     return this.getChatContext(selectedModel?.id ?? null);

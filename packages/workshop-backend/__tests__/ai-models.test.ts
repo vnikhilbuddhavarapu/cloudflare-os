@@ -96,9 +96,8 @@ describe("getModel AI Gateway routing", () => {
     expect(request.headers.get("authorization")).toBeNull();
     expect(JSON.parse(request.headers.get("cf-aig-metadata")!)).toEqual({
       user: "user-123",
-      source: "chat",
-      gadgetId: "gadget-123",
-      chatId: 7,
+      tier: "restricted",
+      source: "chat:gadget=gadget-123#7",
     });
   }, 15000);
 
@@ -132,9 +131,8 @@ describe("getModel AI Gateway routing", () => {
     const request = await captureRequest(handle);
     expect(JSON.parse(request.headers.get("cf-aig-metadata")!)).toEqual({
       user: "owner-456",
-      source: "thread-title",
-      gadgetId: "gadget-456",
-      chatId: 8,
+      tier: "restricted",
+      source: "thread-title:gadget=gadget-456#8",
       automated: true,
     });
   }, 15000);
@@ -176,9 +174,8 @@ describe("getModel AI Gateway routing", () => {
     expect(request.headers.get("cf-aig-authorization")).toBe("Bearer user-token");
     expect(JSON.parse(request.headers.get("cf-aig-metadata")!)).toEqual({
       user: "user-123",
-      source: "chat",
-      gadgetId: "gadget-789",
-      chatId: 9,
+      tier: "restricted",
+      source: "chat:gadget=gadget-789#9",
     });
   }, 15000);
 
@@ -314,9 +311,8 @@ describe("getModel AI Gateway binding transport", () => {
     expect(headerNames).not.toContain("authorization");
     expect(JSON.parse(entry.headers["cf-aig-metadata"])).toEqual({
       user: "user-123",
-      source: "chat",
-      gadgetId: "gadget-123",
-      chatId: 7,
+      tier: "restricted",
+      source: "chat:gadget=gadget-123#7",
     });
     expect((JSON.parse(entry.body) as { model: string }).model).toBe("claude-sonnet-4-5");
   }, 15000);
