@@ -1,0 +1,19 @@
+FORK_NOTES.md
+  s_7c36c6b5f57c12::t_e5bea85811e264 1-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "de3761c8644e862f5ef9f490ebb7de570881e663",
+  "prompts": {},
+  "sessions": {
+    "s_7c36c6b5f57c12": {
+      "agent_id": {
+        "tool": "devin",
+        "id": "s_7c36c6b5f57c12",
+        "model": "unknown"
+      },
+      "human_author": "Nikhil <vnikhilbuddhavarapu@outlook.com>"
+    }
+  }
+}
